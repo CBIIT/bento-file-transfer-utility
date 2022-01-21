@@ -1,9 +1,10 @@
 #Bento Google Drive File Utility
 
 ## Prerequisites
-- A Google Cloud project with Google Drive API
-- A generated service account private key JSON file named "client_secrets.json" placed in the "auth" folder
-- The Google IDs of the target Google Drive folders
+- Python 3.6 or newer
+- A Google Cloud project with Google Drive API enabled
+- A Google service account for this application
+- A service account API authentication key 
 
 ## Google Cloud Configuration
 1. Create a project through the Google Cloud Console (console.cloud.google.com)
@@ -16,4 +17,16 @@
 8. Rename this file "client_secrets.json" and place it in the "auth" directory of this project
 
 Note: Each service account private key can only be downloaded once, a new key will need to be generated each time this file needs to be replaced. Be sure to delete unused service account private keys from the Google Cloud Console when they are no longer in use.
+
+## Command Line Arguments
+- Google Drive Folder IDs
+  - The Google Drive IDs of the folders for which the utility will generate and inventory report
+  - A Google Drive folder URL is also valid, the utility will extract the Google Drive folder ID from the URL automatically
+  - Command: ```-i/--google-id <Google Drive ID or Google Drive folder URL>```
+  - Required
+- Output Directory
+  - An output directory in which the file inventory report will be generated, this directory must already exist
+  - Command: ```-o/--output-dir <directory path>```
+  - Not Required
+  - Default Value: ```<The directory in which the utility is running>```
 
