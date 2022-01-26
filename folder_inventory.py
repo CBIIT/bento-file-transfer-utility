@@ -134,9 +134,13 @@ def verify_args(inputs):
     else:
         for i, current_id in enumerate(ids):
             ids[i] = current_id.split('/')[-1]
-    # If an output directory is specified then verify that the directory exists
+    # Check that an output directory is specified and that the directory exists
     output_dir = inputs.output_dir
-    if output_dir:
+    if not output_dir:
+        logging.error("An already existing output directory must be specified with the '-o' or '--output-dir' flag")
+        return False
+    else:
+        # If an output directory is specified then verify that the directory exists
         if not os.path.isdir(output_dir):
             logging.error("The specified output directory does not exist")
             return False

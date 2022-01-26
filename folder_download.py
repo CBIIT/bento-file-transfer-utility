@@ -1,54 +1,16 @@
-import argparse
 import hashlib
 import os.path
 import pickle
 import shutil
 
 from download_metrics import Metrics
-from folder_inventory import get_folder_contents, FILE_PATH, FILE_STATUS, generate_inventory_report
+from folder_inventory import *
 from google_authentication import authenticate_service_account
 from google_drive_api import *
 # Block size used for file reading during MD5 Checksum verification
 BLOCK_SIZE = 65536
-
-
-def parse_arguments():
-    """
-    Defines the accepted command line argument inputs and syntax then generates an argument parser
-    :return: The generated argument parser
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-o", "--output-dir", help="Output directory")
-    parser.add_argument("-i", "--google-id", help="Google Drive folder ID", action='append')
-    return parser.parse_args()
-
-
-def verify_args(inputs):
-    """
-    Verifies that the required inputs are present and that all inputs are valid
-    :param inputs: The command line args object
-    :return: Boolean result of the argument verification
-    """
-    # Check if at least one Google ID was provided as input and if a URL was provided then extract the Google ID
-    ids = inputs.google_id
-    if not ids:
-        logging.error("At lease one folder id must be specified with the '-i' or '--folder-id' flag")
-        return False
-    else:
-        for i, current_id in enumerate(ids):
-            ids[i] = current_id.split('/')[-1]
-    # Check that an output directory is specified and that the directory exists
-    output_dir = inputs.output_dir
-    if not output_dir:
-        logging.error("An already existing output directory must be specified with the '-o' or '--output-dir' flag")
-        return False
-    else:
-        # If an output directory is specified then verify that the directory exists
-        if not os.path.isdir(output_dir):
-            logging.error("The specified output directory does not exist")
-            return False
-    # Returns true after all verifications are completed
-    return True
+INVENTORY_KEY = "inventory"
+DOWNLOADED_KEY = "downloaded"
 
 
 def serialize(obj, dump_file):
@@ -85,7 +47,6 @@ def verify_md5(file_path, md5):
     """
     # Generate an MD5 checksum and then verify that it matches the provided checksum
     with open(file_path, 'rb') as file:
-        file.seek(0)
         md5hash = hashlib.md5()
         data = file.read()
         while data:
@@ -106,8 +67,12 @@ def main(inputs):
         # Create dump file path and create folder structure if necessary
         dump_file = os.path.join('tmp', '{}.dump.tmp'.format(folder_id))
         if os.path.exists(dump_file):
-            inventory = deserialize(folder_id)
+            logging.info("Resuming a previously interrupted transfer")
+            serialized_map = deserialize(folder_id)
+            inventory = serialized_map[INVENTORY_KEY]
+            downloaded_files = serialized_map[DOWNLOADED_KEY]
         else:
+            logging.info("Beginning transfer")
             inventory = get_folder_contents(api, folder_id)
         # Initialize and start the download metrics object for the inventory array
         metrics = Metrics(inventory)
@@ -115,7 +80,7 @@ def main(inputs):
         # Get file metadata array using the current Google ID
         while len(inventory) > 0:
             # Save progress
-            serialize(inventory, dump_file)
+            serialize({INVENTORY_KEY: inventory, DOWNLOADED_KEY: downloaded_files}, dump_file)
             # Get target file metadata from inventory object
             metadata = inventory.pop()
             # Assemble the full file path and then store the folder path and file name in variables
@@ -155,7 +120,7 @@ def main(inputs):
             # Append the file metadata to the download files array
             downloaded_files.append(metadata)
         # Save empty inventory to signify this folder has completed in case of interruption
-        serialize(inventory, dump_file)
+        serialize({INVENTORY_KEY: inventory, DOWNLOADED_KEY: downloaded_files}, dump_file)
     # Download has completed so the tmp directory with the progress dump files can be deleted
     shutil.rmtree('tmp')
     # Generate and inventory report from the downloaded files array
