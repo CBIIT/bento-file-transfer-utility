@@ -1,5 +1,6 @@
 import datetime
 import logging
+from dateutil import tz
 
 from googleapiclient import discovery
 from googleapiclient.http import MediaIoBaseDownload
@@ -17,12 +18,19 @@ GOOGLE_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 def google_time_string_to_datetime(input_time):
     """
-    Convert a time string from Google into a datetime object
+    Convert a UTC time string from Google into a local timezone datetime object
     :param input_time: The Google time string
     :return: The generated Datetime object
     """
+    # Remove fractions of seconds
     time_string = input_time.split('.')[0]
-    return datetime.datetime.strptime(time_string, GOOGLE_TIME_FORMAT)
+    # Parse time string into datetime object
+    time = datetime.datetime.strptime(time_string, GOOGLE_TIME_FORMAT)
+    # Set datetime timezone property as UTC
+    time = time.replace(tzinfo=tz.tzutc())
+    # Convert time from UTC to local
+    time = time.astimezone(tz.tzlocal())
+    return time
 
 
 class API:
@@ -84,7 +92,8 @@ class API:
             downloader = MediaIoBaseDownload(f, request)
             done = False
             # Print out the download progress if it has not been printed in the last 30 seconds
-            while done is False and (last_update - datetime.datetime.now()) > datetime.timedelta(seconds=30):
-                last_update = datetime.datetime.now()
+            while done is False:
                 status, done = downloader.next_chunk()
-                logging.info("Download %d%%." % int(status.progress() * 100))
+                while (last_update - datetime.datetime.now()) > datetime.timedelta(seconds=30):
+                    last_update = datetime.datetime.now()
+                    logging.info("Download %d%%." % int(status.progress() * 100))

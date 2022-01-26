@@ -85,11 +85,12 @@ def verify_md5(file_path, md5):
     """
     # Generate an MD5 checksum and then verify that it matches the provided checksum
     with open(file_path, 'rb') as file:
+        file.seek(0)
         md5hash = hashlib.md5()
-        data = file.read(BLOCK_SIZE)
+        data = file.read()
         while data:
             md5hash.update(data)
-            data = file.read(BLOCK_SIZE)
+            data = file.read()
     return md5 == md5hash.hexdigest()
 
 
