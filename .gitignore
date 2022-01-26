@@ -1,5 +1,7 @@
 .idea/
-auth/*
 __pycache__/
-*.csv
+auth/
+tmp/
 outputs/
+*.csv
+*.json

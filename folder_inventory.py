@@ -1,15 +1,18 @@
-import csv
 import argparse
-import logging
+import csv
 import os.path
+from datetime import datetime
 
 from googleapiclient.errors import HttpError
+
 from google_authentication import authenticate_service_account
-from datetime import datetime
 from google_drive_api import *
 
 FILE_PATH = "path"
+FILE_STATUS = "status"
+ACCESS_TIME = "access time"
 FOLDER_TYPE = "application/vnd.google-apps.folder"
+TIME_FORMAT = "%Y-%m-%dT%H-%M"
 
 
 def get_folder_contents(api, folder_id):
@@ -23,7 +26,6 @@ def get_folder_contents(api, folder_id):
     root_folder = None
     try:
         root_folder = api.get_folder_by_id(folder_id)
-        logging.info("Opening folder {}".format(root_folder[GOOGLE_FILE_NAME]))
     except HttpError as error:
         logging.error("Unable to access folder with ID: {}".format(folder_id))
         logging.error(error)
@@ -53,6 +55,10 @@ def get_folder_contents(api, folder_id):
                         # Query file specific attributes and then save to the metadata to the inventory array
                         file = api.get_file_by_id(child[GOOGLE_FILE_ID])
                         file[FILE_PATH] = path
+                        last_modified_datetime = google_time_string_to_datetime(file[GOOGLE_FILE_LAST_MODIFIED])
+                        file[GOOGLE_FILE_LAST_MODIFIED] = last_modified_datetime.strftime(TIME_FORMAT)
+                        file[ACCESS_TIME] = datetime.datetime.now().strftime(TIME_FORMAT)
+                        file[FILE_STATUS] = "Not Applicable"
                         inventory.append(file)
                         logging.info("Found file {}".format(child[GOOGLE_FILE_NAME]))
             except HttpError as error:
@@ -72,17 +78,29 @@ def generate_inventory_report(folder_inventory, output_dir):
     # Use the path attribute from a file in the folder inventory to get the root folder name
     root_name = (folder_inventory[0][FILE_PATH]).split('/')[0]
     # Create the folder inventory report name string
-    file_name = "{}/{}.{}.csv".format(output_dir, root_name, datetime.now().strftime("%Y-%m-%d %H-%M-%S"))
+    file_name = "{}/{}.{}.csv".format(output_dir, root_name, datetime.datetime.now().strftime(TIME_FORMAT))
     logging.info("Writing report {}".format(file_name))
     # Create an ordered list of the attributes to include in the inventory report
-    attributes = [GOOGLE_FILE_NAME, FILE_PATH, GOOGLE_FILE_SIZE, GOOGLE_FILE_MD5, GOOGLE_FILE_ID]
+    attributes = [
+        GOOGLE_FILE_NAME,
+        FILE_PATH,
+        FILE_STATUS,
+        GOOGLE_FILE_LAST_MODIFIED,
+        ACCESS_TIME,
+        GOOGLE_FILE_SIZE,
+        GOOGLE_FILE_MD5,
+        GOOGLE_FILE_ID
+    ]
     # Create a map of the attributes to display names for the report
     attribute_name_map = {
         GOOGLE_FILE_NAME: "File Name",
         FILE_PATH: "File Path",
         GOOGLE_FILE_SIZE: "Size",
         GOOGLE_FILE_MD5: "MD5 Checksum",
-        GOOGLE_FILE_ID: "Google ID"
+        GOOGLE_FILE_ID: "Google ID",
+        GOOGLE_FILE_LAST_MODIFIED: "Last Modified",
+        ACCESS_TIME: "Time Accessed",
+        FILE_STATUS: "Status"
     }
     # Write folder inventory to CSV
     with open(file_name, 'w') as csvfile:
@@ -92,6 +110,10 @@ def generate_inventory_report(folder_inventory, output_dir):
 
 
 def parse_arguments():
+    """
+    Defines the accepted command line argument inputs and syntax then generates an argument parser
+    :return: The generated argument parser
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--output-dir", help="Output directory")
     parser.add_argument("-i", "--google-id", help="Google Drive folder ID", action='append')
