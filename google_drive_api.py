@@ -94,6 +94,7 @@ class API:
             # Print out the download progress if it has not been printed in the last 30 seconds
             while done is False:
                 status, done = downloader.next_chunk()
-                while (last_update - datetime.datetime.now()) > datetime.timedelta(seconds=30):
+                delta = datetime.datetime.now() - last_update
+                if delta.seconds > 15:
                     last_update = datetime.datetime.now()
                     logging.info("Download %d%%." % int(status.progress() * 100))
