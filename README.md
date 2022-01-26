@@ -1,4 +1,4 @@
-#Bento Google Drive File Utility
+# Bento Google Drive File Utility
 
 ## Prerequisites
 - Python 3.6 or newer
@@ -20,13 +20,11 @@ Note: Each service account private key can only be downloaded once, a new key wi
 
 ## Command Line Arguments
 - Google Drive Folder IDs
-  - The Google Drive IDs of the folders for which the utility will generate and inventory report
+  - The Google Drive IDs of the target folders
   - A Google Drive folder URL is also valid, the utility will extract the Google Drive folder ID from the URL automatically
   - Command: ```-i/--google-id <Google Drive ID or Google Drive folder URL>```
   - Required
 - Output Directory
-  - An output directory in which the file inventory report will be generated, this directory must already exist
+  - An output directory in which the folder inventory report will be generated and to which the folder contents will be downloaded, this directory must already exist
   - Command: ```-o/--output-dir <directory path>```
-  - Not Required
-  - Default Value: ```<The directory in which the utility is running>```
 
