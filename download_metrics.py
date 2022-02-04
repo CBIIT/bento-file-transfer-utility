@@ -1,5 +1,6 @@
 from google_drive_api import *
 
+BYTES_IN_GB = 1073741824
 
 class Metrics:
 
@@ -12,7 +13,8 @@ class Metrics:
         self.start_time = None
         self.total_size = 0
         for file in file_data:
-            self.total_size += int(file[GOOGLE_FILE_SIZE])
+            file_size = int(file[GOOGLE_FILE_SIZE]) / BYTES_IN_GB
+            self.total_size += file_size
         self.remaining_size = self.total_size
 
     def log_start(self):
@@ -28,7 +30,8 @@ class Metrics:
         :return: An estimate of the remaining download time
         """
         # Update remaining size of data to be downloaded
-        self.remaining_size -= int(file_size)
+        file_size = int(file_size) / BYTES_IN_GB
+        self.remaining_size -= file_size
         # If there have been less than 3 downloads, return that there is not enough data yet for an estimate
         if self.data_points < 3:
             self.data_points += 1
@@ -39,3 +42,4 @@ class Metrics:
             downloaded_size = self.total_size - self.remaining_size
             estimate = elapsed_time * self.remaining_size / downloaded_size
             return estimate
+
