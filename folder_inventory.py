@@ -76,7 +76,11 @@ def generate_inventory_report(folder_inventory, output_dir):
     :param output_dir: The output directory for the report
     """
     # Use the path attribute from a file in the folder inventory to get the root folder name
-    root_name = (folder_inventory[0][FILE_PATH]).split('/')[0]
+    root_name = None
+    try:
+        root_name = (folder_inventory[0][FILE_PATH]).split('/')[0]
+    except Exception as ex:
+        root_name = ''
     # Create the folder inventory report name string
     file_name = "{}/{}.{}.csv".format(output_dir, root_name, datetime.datetime.now().strftime(TIME_FORMAT))
     logging.info("Writing report {}".format(file_name))
