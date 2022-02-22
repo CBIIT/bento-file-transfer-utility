@@ -2,9 +2,7 @@ import argparse
 import csv
 import os.path
 from datetime import datetime
-
 from googleapiclient.errors import HttpError
-
 from google_authentication import authenticate_service_account
 from google_drive_api import *
 
@@ -13,6 +11,10 @@ FILE_STATUS = "status"
 ACCESS_TIME = "access time"
 FOLDER_TYPE = "application/vnd.google-apps.folder"
 TIME_FORMAT = "%Y-%m-%dT%H-%M"
+OVERWRITE_MODE = 'overwrite'
+VERIFY_MODE = 'verify'
+SKIP_MODE = 'skip'
+MODES = [OVERWRITE_MODE, VERIFY_MODE, SKIP_MODE]
 
 
 def get_folder_contents(api, folder_id):
@@ -80,7 +82,7 @@ def generate_inventory_report(folder_inventory, output_dir):
     try:
         root_name = (folder_inventory[0][FILE_PATH]).split('/')[0]
     except Exception as ex:
-        root_name = ''
+        root_name = 'File-Download-Report'
     # Create the folder inventory report name string
     file_name = "{}/{}.{}.csv".format(output_dir, root_name, datetime.datetime.now().strftime(TIME_FORMAT))
     logging.info("Writing report {}".format(file_name))
@@ -121,6 +123,11 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--output-dir", help="Output directory")
     parser.add_argument("-i", "--google-id", help="Google Drive folder ID", action='append')
+    parser.add_argument(
+        "-m", "--mode",
+        help="File conflict resolution mode",
+        choices=MODES, default='overwrite'
+    )
     return parser.parse_args()
 
 
@@ -148,6 +155,10 @@ def verify_args(inputs):
         if not os.path.isdir(output_dir):
             logging.error("The specified output directory does not exist")
             return False
+    # Check that a valid file conflict resolution mode is specified
+    if not inputs.mode or inputs.mode not in MODES:
+        logging.error("The mode argument is either missing or not specified")
+        return False
     # Returns true after all verifications are completed
     return True
 

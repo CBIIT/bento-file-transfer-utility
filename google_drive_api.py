@@ -14,6 +14,8 @@ GOOGLE_FILE_SIZE = "size"
 GOOGLE_FILE_MIMETYPE = "mimeType"
 GOOGLE_FILE_LAST_MODIFIED = "modifiedTime"
 GOOGLE_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
+# Google Drive API files list page size
+PAGE_SIZE = 100
 
 
 def google_time_string_to_datetime(input_time):
@@ -75,7 +77,20 @@ class API:
         :param resource_id: Google ID associated with the desired children's parent object
         :return: Metadata map array for the provided Google ID's associated object's children
         """
-        return self.connection.files().list(q="'{}' in parents".format(resource_id)).execute()['files']
+        files = []
+        npt = None
+        while True:
+            result = self.connection.files().list(
+                q="'{}' in parents".format(resource_id),
+                pageToken=npt,
+                pageSize=PAGE_SIZE
+            ).execute()
+            files.extend(result['files'])
+            if 'nextPageToken' in result:
+                npt = result['nextPageToken']
+            else:
+                break
+        return files
 
     def download_file(self, path, google_id):
         """
