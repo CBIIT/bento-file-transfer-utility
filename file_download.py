@@ -1,9 +1,9 @@
 import hashlib
 import os
 from os.path import exists
-from folder_inventory import *
-from google_authentication import authenticate_service_account
-from google_drive_api import *
+from google_drive_transfer.folder_inventory import *
+from google_drive_transfer.google_authentication import authenticate_service_account
+from google_drive_transfer.google_drive_api import *
 
 # Block size used for file reading during MD5 Checksum verification
 BLOCK_SIZE = 65536

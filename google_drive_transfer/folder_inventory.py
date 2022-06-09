@@ -3,8 +3,8 @@ import csv
 import os.path
 from datetime import datetime
 from googleapiclient.errors import HttpError
-from google_authentication import authenticate_service_account
-from google_drive_api import *
+from google_drive_transfer.google_authentication import authenticate_service_account
+from google_drive_transfer.google_drive_api import *
 
 FILE_PATH = "path"
 FILE_STATUS = "status"

@@ -1,11 +1,11 @@
 import os.path
 import pickle
 import shutil
-from download_metrics import Metrics
+from google_drive_transfer.download_metrics import Metrics
 from file_download import download_file
-from folder_inventory import *
-from google_authentication import authenticate_service_account
-from google_drive_api import *
+from google_drive_transfer.folder_inventory import *
+from google_drive_transfer.google_authentication import authenticate_service_account
+from google_drive_transfer.google_drive_api import *
 
 INVENTORY_KEY = "inventory"
 DOWNLOADED_KEY = "downloaded"

@@ -1,4 +1,4 @@
-from google_drive_api import *
+from google_drive_transfer.google_drive_api import *
 
 BYTES_IN_GB = 1073741824
 
