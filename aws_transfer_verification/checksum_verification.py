@@ -1,5 +1,4 @@
-import hashlib
-import os
+from hashlib import md5
 
 from aws_transfer_verification import aws_client
 
@@ -19,46 +18,33 @@ def aws_verify(file_data, local_root_folder, bucket, s3_root_folder):
     :return: Boolean result of the Etag verification
     """
     s3_path = file_data.path
-    local_path = file_data.path
     if s3_root_folder:
-        s3_path = os.path.join(s3_root_folder, s3_path)
-    if local_root_folder:
-        local_path = os.path.join(local_root_folder, local_path)
+        s3_path = "/".join([s3_root_folder, s3_path])
     etag = aws_client.get_file_etag(bucket, s3_path)
+    file_data.etag = etag
     if "-" in etag:
-        file_data.verified = verify_etag(local_path, etag)
+        file_data.verified = verify_etag(file_data, etag)
         file_data.etag_format = "Double Layered MD5 Checksum"
     else:
-        file_data.verified = verify_md5(local_path, etag)
+        file_data.verified = verify_md5(file_data, etag)
         file_data.etag_format = "MD5 Checksum"
     if not file_data.verified:
         file_data.comment = "The calculated Etag did not match the reference Etag"
+    return file_data
 
 
-def verify_md5(local_path, md5):
-    """
-    Calculate the MD5 checksum of the specified file and verify that it matches the provided MD5 checksum
-    :param local_path: The path of the file to verify
-    :param md5: The verification MD5 checksum
-    :return: Boolean result of the MD5 verification
-    """
-    return md5 == calculate_md5(local_path)
+def verify_md5(file_data, md5):
+    return md5 == calculate_md5(file_data)
 
 
-def verify_etag(local_path, etag):
-    """
-    Calculate the Etag of the specified file and verify that it matches the provided Etag
-    :param local_path: The path of the file to verify
-    :param etag: The verification Etag
-    :return: Boolean result of the Etag verification
-    """
+def verify_etag(file_data, etag):
     num_parts = int(etag.split('-')[1])
-    return etag == _calculate_etag(local_path, num_parts)
+    return etag == _calculate_etag(file_data, num_parts)
 
 
-def calculate_md5(local_path):
-    md5hash = hashlib.md5()
-    with open(local_path, 'rb') as file:
+def calculate_md5(file_data):
+    md5hash = md5()
+    with open(file_data.get_local_path(), 'rb') as file:
         data = file.read(BLOCK_SIZE_64KB)
         while data:
             md5hash.update(data)
@@ -68,12 +54,11 @@ def calculate_md5(local_path):
 
 def _calculate_etag(file_data, num_parts):
     part_size = _determine_part_size(file_data.size, num_parts)
-    md5hash = hashlib.md5()
     md5_digests = []
-    with open(file_data.path, 'rb') as f:
+    with open(file_data.get_local_path(), 'rb') as f:
         for chunk in iter(lambda: f.read(part_size), b''):
-            md5_digests.append(md5hash(chunk).digest())
-    return md5hash(b''.join(md5_digests)).hexdigest() + '-' + str(len(md5_digests))
+            md5_digests.append(md5(chunk).digest())
+    return md5(b''.join(md5_digests)).hexdigest() + '-' + str(len(md5_digests))
 
 
 def _determine_part_size(size, num_parts):

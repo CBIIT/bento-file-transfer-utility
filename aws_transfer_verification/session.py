@@ -23,7 +23,7 @@ class Session:
     """
 
     def __init__(self, local_root, s3_root, bucket):
-        self.root_folder = local_root
+        self.local_root_folder = local_root
         self.s3_root_folder = s3_root
         self.s3_bucket = bucket
         self.completed = {}
@@ -45,7 +45,7 @@ class Session:
         :return: The estimated remaining time in hours
         """
         estimate = self.completed_duration / self.completed_data_size * self.queued_data_size
-        return estimate / 3600
+        return round(estimate / 3600,2)
 
     def has_next_file(self):
         """
@@ -73,6 +73,8 @@ class Session:
         :return: None
         """
         file_data = FileData(path, file_size, md5)
+        if self.local_root_folder:
+            file_data.local_root = self.local_root_folder
         self.queued[file_data.path] = file_data
         self.queued_data_size += file_data.size
 

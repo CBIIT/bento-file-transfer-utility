@@ -30,7 +30,7 @@ def init_session(inputs):
     if inputs.session:
         return deserialize_session(inputs.session)
     else:
-        return Session(inputs.root_folder, inputs.s3_root_folder, inputs.bucket)
+        return Session(inputs.local_root_folder, inputs.s3_root_folder, inputs.bucket)
 
 
 def queue_files(inputs, session):
@@ -87,13 +87,13 @@ def verify_files(session):
                     serialize_session(session)
             except Exception as ex:
                 file_data.verified = False
-                file_data.comment = ex.message
+                file_data.comment = str(ex)
                 session.fail_file(file_data, file_start)
         else:
             raise Exception(
                 "Critical error: unable to get file data from queue, please contact developer and provide the"
                 " session file")
-    session.log_verification_stop_time()
+    session.log_verification_last_time()
     return session
 
 

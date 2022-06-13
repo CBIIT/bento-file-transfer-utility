@@ -1,3 +1,6 @@
+import os.path
+
+
 class FileData:
     """
     Contains meta-data for an individual file and verification status
@@ -18,3 +21,8 @@ class FileData:
         self.etag_format = None
         self.comment = None
         self.verified = False
+        self.local_root = None
+
+    def get_local_path(self):
+        if self.local_root:
+            return os.path.join(self.local_root, self.path)
