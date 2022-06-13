@@ -45,7 +45,7 @@ class Session:
         :return: The estimated remaining time in hours
         """
         estimate = self.completed_duration / self.completed_data_size * self.queued_data_size
-        return round(estimate / 3600,2)
+        return round(estimate / 3600, 2)
 
     def has_next_file(self):
         """

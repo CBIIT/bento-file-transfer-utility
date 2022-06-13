@@ -105,15 +105,15 @@ def generate_output(inputs, session):
     logging.info("Writing report {}".format(report_name))
     with open(report_name, 'w') as csvfile:
         csvwriter = csv.writer(csvfile, lineterminator='\n')
-        csvwriter.writerow(["File Path", "Size", "Reference MD5 Checksum", "S3 Etag", "Etag Format", "Verified",
+        csvwriter.writerow(["File Path", "Size", "Reference MD5 Checksum", "S3 Etag", "Calculated Etag", "Etag Format", "Verified",
                             "Comment"])
         for key in session.failed:
             file_data = session.failed[key]
-            csvwriter.writerow([file_data.path, file_data.size, file_data.md5, file_data.etag, file_data.etag_format,
+            csvwriter.writerow([file_data.path, file_data.size, file_data.md5, file_data.etag, file_data.calculated_etag, file_data.etag_format,
                                 file_data.verified, file_data.comment])
         for key in session.completed:
             file_data = session.completed[key]
-            csvwriter.writerow([file_data.path, file_data.size, file_data.md5, file_data.etag, file_data.etag_format,
+            csvwriter.writerow([file_data.path, file_data.size, file_data.md5, file_data.etag, file_data.calculated_etag, file_data.etag_format,
                                 file_data.verified, "Verified"])
     csvfile.close()
 

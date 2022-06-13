@@ -22,6 +22,7 @@ class FileData:
         self.comment = None
         self.verified = False
         self.local_root = None
+        self.calculated_etag = None
 
     def get_local_path(self):
         if self.local_root:

@@ -23,23 +23,29 @@ def aws_verify(file_data, local_root_folder, bucket, s3_root_folder):
     etag = aws_client.get_file_etag(bucket, s3_path)
     file_data.etag = etag
     if "-" in etag:
-        file_data.verified = verify_etag(file_data, etag)
+        file_data = verify_etag(file_data, etag)
         file_data.etag_format = "Double Layered MD5 Checksum"
     else:
-        file_data.verified = verify_md5(file_data, etag)
+        file_data = verify_md5(file_data, etag)
         file_data.etag_format = "MD5 Checksum"
     if not file_data.verified:
         file_data.comment = "The calculated Etag did not match the reference Etag"
     return file_data
 
 
-def verify_md5(file_data, md5):
-    return md5 == calculate_md5(file_data)
+def verify_md5(file_data, reference_md5):
+    calculated = calculate_md5(file_data)
+    file_data.calculated_etag = calculated
+    file_data.verified = (reference_md5 == calculated)
+    return file_data
 
 
-def verify_etag(file_data, etag):
-    num_parts = int(etag.split('-')[1])
-    return etag == _calculate_etag(file_data, num_parts)
+def verify_etag(file_data, reference_etag):
+    num_parts = int(reference_etag.split('-')[1])
+    calculated = _calculate_etag(file_data, num_parts)
+    file_data.calculated_etag = calculated
+    file_data.verified = (reference_etag == calculated)
+    return file_data
 
 
 def calculate_md5(file_data):
