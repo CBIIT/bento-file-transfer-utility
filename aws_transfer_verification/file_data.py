@@ -2,27 +2,17 @@ import os.path
 
 
 class FileData:
-    """
-    Contains meta-data for an individual file and verification status
-
-    Attributes:
-        path (str): The file's path
-        size (int): The file's size in bytes
-        md5 (str): The file's reference MD5 checksum
-        etag (str): The file's AWS etag
-        comment (str): A comment containing details of the file's verification results
-        verified (bool): The file's verification status
-    """
-    def __init__(self, path, size, md5):
+    def __init__(self, path, size, ref_md5, ref_etag):
         self.path = path
         self.size = int(size)
-        self.md5 = md5
-        self.etag = None
+        self.ref_md5 = ref_md5
+        self.ref_etag = ref_etag
+        self.s3_etag = None
         self.etag_format = None
         self.comment = None
         self.verified = False
         self.local_root = None
-        self.calculated_etag = None
+        self.calc_etag = None
 
     def get_local_path(self):
         if self.local_root:

@@ -7,44 +7,46 @@ BLOCK_SIZE_1MB = 1048576
 BLOCK_SIZE_8MB = 8388608
 BLOCK_SIZE_15MB = 15728640
 
+NOT_RECALCULATED = "Not Recalculated"
+
 
 def aws_verify(file_data, local_root_folder, bucket, s3_root_folder):
-    """
-    Retrieve file Etag from AWS, then detect Etag format and calculate it locally to verify
-    :param s3_root_folder:
-    :param file_data: File data of the file to verify
-    :param local_root_folder: The root folder of the files to verify
-    :param bucket: The AWS bucket containing the file
-    :return: Boolean result of the Etag verification
-    """
     s3_path = file_data.path
     if s3_root_folder:
         s3_path = "/".join([s3_root_folder, s3_path])
-    etag = aws_client.get_file_etag(bucket, s3_path)
-    file_data.etag = etag
-    if "-" in etag:
-        file_data = verify_etag(file_data, etag)
+    s3_etag = aws_client.get_file_etag(bucket, s3_path)
+    file_data.s3_etag = s3_etag
+    if "-" in s3_etag:
+        file_data = verify_etag(file_data, s3_etag)
         file_data.etag_format = "Double Layered MD5 Checksum"
     else:
-        file_data = verify_md5(file_data, etag)
+        file_data = verify_md5(file_data, s3_etag)
         file_data.etag_format = "MD5 Checksum"
     if not file_data.verified:
         file_data.comment = "The calculated Etag did not match the reference Etag"
     return file_data
 
 
-def verify_md5(file_data, reference_md5):
-    calculated = calculate_md5(file_data)
-    file_data.calculated_etag = calculated
-    file_data.verified = (reference_md5 == calculated)
+def verify_md5(file_data, s3_etag):
+    if file_data.ref_md5:
+        file_data.calc_etag = NOT_RECALCULATED
+        file_data.verified = (file_data.ref_md5 == s3_etag)
+    else:
+        calculated = calculate_md5(file_data)
+        file_data.calc_etag = calculated
+        file_data.verified = (s3_etag == calculated)
     return file_data
 
 
-def verify_etag(file_data, reference_etag):
-    num_parts = int(reference_etag.split('-')[1])
-    calculated = _calculate_etag(file_data, num_parts)
-    file_data.calculated_etag = calculated
-    file_data.verified = (reference_etag == calculated)
+def verify_etag(file_data, s3_etag):
+    if file_data.ref_etag:
+        file_data.calc_etag = NOT_RECALCULATED
+        file_data.verified = (file_data.ref_etag == s3_etag)
+    else:
+        num_parts = int(s3_etag.split('-')[1])
+        calculated = _calculate_etag(file_data, num_parts)
+        file_data.calc_etag = calculated
+        file_data.verified = (s3_etag == calculated)
     return file_data
 
 
