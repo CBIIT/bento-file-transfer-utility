@@ -6,6 +6,10 @@ BLOCK_SIZE_64KB = 65536
 BLOCK_SIZE_1MB = 1048576
 BLOCK_SIZE_8MB = 8388608
 BLOCK_SIZE_15MB = 15728640
+BLOCK_SIZE_16MB = 16777216
+BLOCK_SIZE_32MB = 33554432
+BLOCK_SIZE_64MB = 67108864
+BLOCK_SIZE_128MB = 134217728
 
 NOT_RECALCULATED = "Not Recalculated"
 
@@ -71,8 +75,13 @@ def _calculate_etag(file_data, num_parts):
 
 def _determine_part_size(size, num_parts):
     part_sizes = [
+        BLOCK_SIZE_64KB,
         BLOCK_SIZE_8MB,
         BLOCK_SIZE_15MB,
+        BLOCK_SIZE_16MB,
+        BLOCK_SIZE_32MB,
+        BLOCK_SIZE_64MB,
+        BLOCK_SIZE_128MB,
         _factor_of_1MB(size, num_parts)
     ]
     for part_size in part_sizes:
